@@ -1,11 +1,156 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FUENTES DE CAMPO MAGNETICO</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fuentes de Campo Magnético</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #2a2a38;
+      color: #ffffff;
+    }
+
+    header, nav, .contenido {
+      overflow: hidden;
+      position: relative;
+      z-index: 1;
+    }
+
+    header {
+      background: linear-gradient(90deg, #6a5acd, #7b68ee, #8a2be2);
+      padding: 30px;
+      text-align: center;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 2.5rem;
+      letter-spacing: 2px;
+    }
+
+    nav {
+      background-color: #3f3c56;
+      padding: 10px 0;
+      text-align: center;
+    }
+
+    nav a {
+      color: #b0c4ff;
+      margin: 0 20px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    nav a:hover {
+      color: #ffffff;
+    }
+
+    .contenido {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 20px;
+      background-color: #4b3c5e;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .contenido h2 {
+      color: #c2d1ff;
+      margin-bottom: 15px;
+    }
+
+    .contenido p {
+      line-height: 1.6;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      background-color: #2f2b40;
+      color: #aaa;
+      font-size: 0.9rem;
+      margin-top: 40px;
+    }
+
+    /* Animación wipe-in desde la derecha */
+    @keyframes wipe-in-right {
+      from {
+        clip-path: inset(0 100% 0 0);
+      }
+      to {
+        clip-path: inset(0 0 0 0);
+      }
+    }
+
+    [transition-style="in:wipe:right"] {
+      animation: 2.5s cubic-bezier(.25, 1, .30, 1) wipe-in-right both;
+    }
+  </style>
 </head>
 <body>
-    
+
+  <header transition-style="in:wipe:right">
+    <h1>Fuentes De Campo Magnetico</h1>
+  </header>
+
+  <nav transition-style="in:wipe:right">
+    <a href="Index.html">Simulador</a>
+    <a href="Tierra.html">Tierra</a>
+    <a href="Imanes.html" id="btn-imanes">Imanes</a>
+  </nav>
+
+  <section class="contenido" transition-style="in:wipe:right">
+    <h2>Bienvenido a Nuestra Página</h2>
+    <p>
+      Esta es una página informativa de ejemplo que utiliza una paleta moderna en tonos azules y morados. 
+      Puedes personalizarla con el contenido de tu organización, producto o portafolio.
+    </p>
+    <p>
+      El diseño está enfocado en la claridad y en proporcionar una experiencia visual atractiva. Puedes 
+      incluir secciones adicionales según tus necesidades, como testimonios, galería de imágenes o un blog.
+    </p>
+  </section>
+
+  <section class="contenido" transition-style="in:wipe:right">
+    <h2>Fuentes Naturales del Campo Magnético</h2>
+    <p>
+      La Tierra genera su propio campo magnético debido al movimiento del núcleo externo líquido. Este campo es crucial
+      para la vida, ya que desvía las partículas solares y cósmicas.
+    </p>
+    <p>
+      También existen fuentes magnéticas naturales como los minerales de magnetita, que pueden influir en brújulas o en
+      experimentos científicos.
+    </p>
+  </section>
+
+  <section class="contenido" transition-style="in:wipe:right">
+    <h2>Fuentes Artificiales</h2>
+    <p>
+      Bobinas con corriente eléctrica, imanes permanentes y dispositivos electromagnéticos generan campos magnéticos en entornos
+      industriales, tecnológicos y médicos.
+    </p>
+    <p>
+      Estas fuentes tienen aplicaciones prácticas en motores, transformadores, trenes magnéticos, entre otros.
+    </p>
+  </section>
+
+  <section class="contenido" transition-style="in:wipe:right">
+    <h2>Importancia del Campo Magnético</h2>
+    <p>
+      Sin el campo magnético terrestre, la atmósfera sería arrasada por el viento solar. Este campo también permite la navegación,
+      el funcionamiento de brújulas y protege a los sistemas electrónicos.
+    </p>
+    <p>
+      En la medicina, los campos magnéticos son utilizados en tecnologías como la resonancia magnética nuclear (RMN).
+    </p>
+  </section>
+
+  <footer>
+    &copy; 2025 Nombre del Proyecto. Todos los derechos reservados.
+  </footer>
+
 </body>
 </html>
