@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Tierra con Campos Magnéticos Realistas</title>
+  <title>Tierra con Capas y Campo Magnético</title>
   <style>
     body { 
       margin: 0; 
@@ -33,19 +33,111 @@
       padding: 15px;
       border-radius: 5px;
     }
+    #controls {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+    }
+    button {
+      background: linear-gradient(135deg, #6a5acd, #8a2be2);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    .btn-core {
+      background: linear-gradient(135deg, #ff6600, #ff3300);
+    }
+    .btn-reset {
+      background: linear-gradient(135deg, #3a3a5a, #5a5a8a);
+    }
+    .btn-field {
+      background: linear-gradient(135deg, #00aaff, #0088cc);
+    }
+    .layer-info {
+      position: absolute;
+      top: 60px;
+      left: 20px;
+      background: rgba(0,0,0,0.7);
+      padding: 15px;
+      border-radius: 10px;
+      max-width: 250px;
+      display: none;
+    }
   </style>
 </head>
 <body>
-  <div id="info">Tierra con Campos Magnéticos • Rotación: Click + Arrastrar • Zoom: Rueda del ratón</div>
+  <div id="info">Modelo Geológico Terrestre con Campo Magnético</div>
   <div id="loading">Cargando modelo 3D...</div>
+  <div id="controls">
+    <button id="btnToggleLayers" class="btn-core">Mostrar Capas</button>
+    <button id="btnToggleField" class="btn-field">Campos Magnéticos</button>
+    <button id="btnReset" class="btn-reset">Vista Completa</button>
+  </div>
+  <div id="layerInfo" class="layer-info"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
   
   <script>
     // Variables globales
-    let scene, camera, renderer, earth, controls, fieldLines = [];
+    let scene, camera, renderer, controls;
+    let earth, crustHalf1, crustHalf2, mantleHalf1, mantleHalf2, outerCore, innerCore;
+    let fieldLines = [], fieldParticles = [];
+    let showLayers = false, showField = true;
     const clock = new THREE.Clock();
+    
+    // Radio de cada capa (fracciones del radio terrestre)
+    const layerRadii = {
+      earth: 1.0,
+      crust: 0.98,    // Corteza (1-70 km)
+      mantle: 0.85,   // Manto (hasta 2890 km)
+      outerCore: 0.55, // Núcleo externo (hasta 5150 km)
+      innerCore: 0.19  // Núcleo interno (hasta 6371 km)
+    };
+
+    // Información de las capas
+    const layerData = {
+      crust: {
+        name: "Corteza",
+        color: 0x3a5f0b,
+        thickness: "5-70 km",
+        composition: "Rocas sólidas (silicatos)"
+      },
+      mantle: {
+        name: "Manto",
+        color: 0xff4500,
+        thickness: "2,900 km",
+        composition: "Rocas viscosas (silicatos de Mg/Fe)"
+      },
+      outerCore: {
+        name: "Núcleo Externo",
+        color: 0xff8c00,
+        thickness: "2,260 km",
+        composition: "Hierro y níquel fundidos",
+        fieldInfo: "Genera el campo magnético por efecto dinamo"
+      },
+      innerCore: {
+        name: "Núcleo Interno",
+        color: 0xff0000,
+        thickness: "1,220 km",
+        composition: "Hierro y níquel sólidos"
+      }
+    };
     
     init();
     animate();
@@ -58,13 +150,16 @@
       setupControls();
       setupLights();
 
-      // 2. Crear Tierra
-      createEarth();
+      // 2. Crear modelo terrestre completo
+      createEarthModel();
 
-      // 3. Crear campos magnéticos mejorados
-      createImprovedMagneticFields();
+      // 3. Crear capas internas (inicialmente ocultas)
+      createEarthLayers();
 
-      // 4. Manejo de eventos
+      // 4. Crear campo magnético
+      createMagneticField();
+
+      // 5. Configurar eventos
       setupEvents();
 
       document.getElementById('loading').style.display = 'none';
@@ -121,8 +216,8 @@
       scene.add(fillLight);
     }
 
-    function createEarth() {
-      const geometry = new THREE.SphereGeometry(1, 64, 64);
+    function createEarthModel() {
+      const geometry = new THREE.SphereGeometry(layerRadii.earth, 64, 64);
       
       // Texturas
       const textureLoader = new THREE.TextureLoader();
@@ -133,15 +228,11 @@
       const bumpMap = textureLoader.load(
         'https://threejs.org/examples/textures/planets/earth_normal_2048.jpg'
       );
-      const specularMap = textureLoader.load(
-        'https://threejs.org/examples/textures/planets/earth_specular_2048.jpg'
-      );
       
       const material = new THREE.MeshPhongMaterial({
         map: texture,
         bumpMap: bumpMap,
         bumpScale: 0.05,
-        specularMap: specularMap,
         specular: new THREE.Color('grey'),
         shininess: 5
       });
@@ -154,7 +245,7 @@
     }
 
     function createAtmosphere() {
-      const geometry = new THREE.SphereGeometry(1.05, 64, 64);
+      const geometry = new THREE.SphereGeometry(layerRadii.earth * 1.02, 64, 64);
       const material = new THREE.MeshStandardMaterial({
         color: 0x5599ff,
         transparent: true,
@@ -165,7 +256,138 @@
       earth.add(atmosphere);
     }
 
-    function createImprovedMagneticFields() {
+    function createEarthLayers() {
+      // Crear geometría de media esfera para las capas
+      const halfGeometry = (radius) => new THREE.SphereGeometry(
+        radius, 64, 64, 0, Math.PI * 2, 0, Math.PI
+      );
+      
+      // Corteza (mitades)
+      const crustMaterial = new THREE.MeshPhongMaterial({
+        color: layerData.crust.color,
+        transparent: true,
+        opacity: 0.9,
+        shininess: 30
+      });
+      
+      crustHalf1 = new THREE.Mesh(halfGeometry(layerRadii.crust), crustMaterial);
+      crustHalf1.position.y = 0.5;
+      crustHalf1.visible = false;
+      crustHalf1.userData = { layer: 'crust' };
+      scene.add(crustHalf1);
+      
+      crustHalf2 = new THREE.Mesh(halfGeometry(layerRadii.crust), crustMaterial);
+      crustHalf2.rotation.x = Math.PI;
+      crustHalf2.position.y = -0.5;
+      crustHalf2.visible = false;
+      crustHalf2.userData = { layer: 'crust' };
+      scene.add(crustHalf2);
+      
+      // Manto (mitades)
+      const mantleMaterial = new THREE.MeshPhongMaterial({
+        color: layerData.mantle.color,
+        emissive: 0xcc3300,
+        emissiveIntensity: 0.2,
+        shininess: 50
+      });
+      
+      mantleHalf1 = new THREE.Mesh(halfGeometry(layerRadii.mantle), mantleMaterial);
+      mantleHalf1.position.y = 0.5;
+      mantleHalf1.visible = false;
+      mantleHalf1.userData = { layer: 'mantle' };
+      scene.add(mantleHalf1);
+      
+      mantleHalf2 = new THREE.Mesh(halfGeometry(layerRadii.mantle), mantleMaterial);
+      mantleHalf2.rotation.x = Math.PI;
+      mantleHalf2.position.y = -0.5;
+      mantleHalf2.visible = false;
+      mantleHalf2.userData = { layer: 'mantle' };
+      scene.add(mantleHalf2);
+      
+      // Núcleo externo (esfera completa)
+      const outerCoreMaterial = new THREE.MeshPhongMaterial({
+        color: layerData.outerCore.color,
+        emissive: 0xff6600,
+        emissiveIntensity: 0.4,
+        specular: 0xffaa00,
+        shininess: 30,
+        transparent: true,
+        opacity: 0.8
+      });
+      
+      outerCore = new THREE.Mesh(
+        new THREE.SphereGeometry(layerRadii.outerCore, 64, 64), 
+        outerCoreMaterial
+      );
+      outerCore.visible = false;
+      outerCore.userData = { layer: 'outerCore' };
+      scene.add(outerCore);
+      
+      // Núcleo interno (esfera completa)
+      const innerCoreMaterial = new THREE.MeshPhongMaterial({
+        color: layerData.innerCore.color,
+        emissive: 0xff0000,
+        emissiveIntensity: 0.6,
+        specular: 0xffcc00,
+        shininess: 50
+      });
+      
+      innerCore = new THREE.Mesh(
+        new THREE.SphereGeometry(layerRadii.innerCore, 64, 64), 
+        innerCoreMaterial
+      );
+      innerCore.visible = false;
+      innerCore.userData = { layer: 'innerCore' };
+      scene.add(innerCore);
+      
+      // Efecto de calor/energía en el núcleo
+      createCoreEffect();
+    }
+
+    function createCoreEffect() {
+      // Partículas para simular convección del núcleo
+      const particleCount = 800;
+      const particles = new THREE.BufferGeometry();
+      const positions = new Float32Array(particleCount * 3);
+      const colors = new Float32Array(particleCount * 3);
+      const sizes = new Float32Array(particleCount);
+      
+      for (let i = 0; i < particleCount; i++) {
+        // Posiciones aleatorias dentro del núcleo externo
+        const radius = layerRadii.innerCore + Math.random() * (layerRadii.outerCore - layerRadii.innerCore);
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.random() * Math.PI;
+        
+        positions[i * 3] = Math.sin(phi) * Math.cos(theta) * radius;
+        positions[i * 3 + 1] = Math.cos(phi) * radius;
+        positions[i * 3 + 2] = Math.sin(phi) * Math.sin(theta) * radius;
+        
+        // Colores amarillos/naranjas/rojos
+        colors[i * 3] = 1.0; // R
+        colors[i * 3 + 1] = 0.3 + Math.random() * 0.5; // G
+        colors[i * 3 + 2] = 0.0; // B
+        
+        sizes[i] = 1 + Math.random() * 3;
+      }
+      
+      particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      particles.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      particles.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+      
+      const particleMaterial = new THREE.PointsMaterial({
+        size: 0.07,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.9,
+        blending: THREE.AdditiveBlending
+      });
+      
+      const particleSystem = new THREE.Points(particles, particleMaterial);
+      particleSystem.visible = false;
+      outerCore.add(particleSystem);
+    }
+
+    function createMagneticField() {
       const group = new THREE.Group();
       const count = 24; // Número de líneas de campo
       
@@ -262,11 +484,11 @@
       southPole.position.y = -1;
       earth.add(southPole);
       
-      // Añadir partículas brillantes
-      createParticles();
+      // Partículas en los polos
+      createPoleParticles();
     }
 
-    function createParticles() {
+    function createPoleParticles() {
       const particleCount = 100;
       const particles = new THREE.BufferGeometry();
       const positions = new Float32Array(particleCount * 3);
@@ -311,6 +533,116 @@
       
       const particleSystem = new THREE.Points(particles, particleMaterial);
       earth.add(particleSystem);
+      fieldParticles.push(particleSystem);
+    }
+
+    function toggleLayersView() {
+      showLayers = !showLayers;
+      
+      // Actualizar visibilidad de los elementos
+      earth.visible = !showLayers;
+      crustHalf1.visible = showLayers;
+      crustHalf2.visible = showLayers;
+      mantleHalf1.visible = showLayers;
+      mantleHalf2.visible = showLayers;
+      outerCore.visible = showLayers;
+      innerCore.visible = showLayers;
+      
+      // Mostrar partículas del núcleo
+      if (outerCore.children.length > 0) {
+        outerCore.children[0].visible = showLayers;
+      }
+      
+      // Actualizar texto del botón
+      document.getElementById('btnToggleLayers').textContent = 
+        showLayers ? "Ocultar Capas" : "Mostrar Capas";
+      
+      // Reposicionar las mitades
+      if (showLayers) {
+        crustHalf1.position.x = -0.7;
+        crustHalf2.position.x = 0.7;
+        mantleHalf1.position.x = -0.5;
+        mantleHalf2.position.x = 0.5;
+      }
+      
+      // Mostrar/ocultar información de capas
+      document.getElementById('layerInfo').style.display = 
+        showLayers ? 'block' : 'none';
+      
+      // Resetear controles de órbita
+      controls.reset();
+    }
+
+    function toggleMagneticField() {
+      showField = !showField;
+      
+      // Mostrar/ocultar líneas de campo
+      fieldLines.forEach(line => {
+        line.visible = showField;
+      });
+      
+      // Mostrar/ocultar partículas polares
+      fieldParticles.forEach(particles => {
+        particles.visible = showField;
+      });
+      
+      // Actualizar texto del botón
+      document.getElementById('btnToggleField').textContent = 
+        showField ? "Ocultar Campos" : "Mostrar Campos";
+    }
+
+    function resetView() {
+      showLayers = false;
+      showField = true;
+      
+      earth.visible = true;
+      crustHalf1.visible = false;
+      crustHalf2.visible = false;
+      mantleHalf1.visible = false;
+      mantleHalf2.visible = false;
+      outerCore.visible = false;
+      innerCore.visible = false;
+      
+      if (outerCore.children.length > 0) {
+        outerCore.children[0].visible = false;
+      }
+      
+      // Mostrar campo magnético
+      fieldLines.forEach(line => {
+        line.visible = true;
+      });
+      
+      fieldParticles.forEach(particles => {
+        particles.visible = true;
+      });
+      
+      document.getElementById('btnToggleLayers').textContent = "Mostrar Capas";
+      document.getElementById('btnToggleField').textContent = "Ocultar Campos";
+      document.getElementById('layerInfo').style.display = 'none';
+      
+      // Resetear posición de la cámara
+      camera.position.set(0, 0, 4);
+      controls.reset();
+    }
+
+    function updateLayerInfo(layerName) {
+      const layer = layerData[layerName];
+      const infoDiv = document.getElementById('layerInfo');
+      
+      infoDiv.innerHTML = `
+        <h3>${layer.name}</h3>
+        <p><strong>Espesor:</strong> ${layer.thickness}</p>
+        <p><strong>Composición:</strong> ${layer.composition}</p>
+      `;
+      
+      if (layerName === 'outerCore') {
+        infoDiv.innerHTML += `
+          <p><strong>Temperatura:</strong> 4,000-6,000°C</p>
+          <p><strong>Campo Magnético:</strong> ${layer.fieldInfo}</p>
+        `;
+      } else if (layerName === 'innerCore') {
+        infoDiv.innerHTML += `<p><strong>Temperatura:</strong> ~6,000°C</p>`;
+      }
     }
 
     function animate() {
@@ -319,28 +651,81 @@
       const delta = clock.getDelta();
       const time = clock.getElapsedTime();
       
-      // Rotación de la Tierra
-      if (earth) {
+      // Rotación de los modelos
+      if (earth.visible) {
         earth.rotation.y += 0.2 * delta;
+      } else {
+        crustHalf1.rotation.y += 0.15 * delta;
+        crustHalf2.rotation.y += 0.15 * delta;
+        mantleHalf1.rotation.y += 0.2 * delta;
+        mantleHalf2.rotation.y += 0.2 * delta;
+        outerCore.rotation.y += 0.3 * delta;
+        innerCore.rotation.y += 0.4 * delta;
       }
       
-      // Animación de las líneas de campo
-      fieldLines.forEach((line, index) => {
-        if (line.geometry.attributes.position) {
-          const positions = line.geometry.attributes.position.array;
-          for (let i = 1; i < positions.length / 3 - 1; i++) {
-            // Efecto de onda suave
-            positions[i * 3 + 1] += Math.sin(time * 2 + index * 0.2 + i * 0.1) * 0.005;
-          }
-          line.geometry.attributes.position.needsUpdate = true;
+      // Animación de partículas del núcleo
+      if (outerCore.children.length > 0 && outerCore.children[0].visible) {
+        const particles = outerCore.children[0].geometry.attributes.position;
+        for (let i = 0; i < particles.count; i++) {
+          // Movimiento convectivo
+          particles.array[i * 3 + 1] += Math.sin(time * 3 + i * 0.05) * 0.003;
         }
-      });
+        particles.needsUpdate = true;
+      }
+      
+      // Animación de las líneas de campo magnético
+      if (showField) {
+        fieldLines.forEach((line, index) => {
+          if (line.geometry.attributes.position) {
+            const positions = line.geometry.attributes.position.array;
+            for (let i = 1; i < positions.length / 3 - 1; i++) {
+              // Efecto de onda suave
+              positions[i * 3 + 1] += Math.sin(time * 2 + index * 0.2 + i * 0.1) * 0.005;
+            }
+            line.geometry.attributes.position.needsUpdate = true;
+          }
+        });
+      }
       
       controls.update();
       renderer.render(scene, camera);
     }
 
     function setupEvents() {
+      // Botón para mostrar/ocultar capas
+      document.getElementById('btnToggleLayers').addEventListener('click', toggleLayersView);
+      
+      // Botón para mostrar/ocultar campo magnético
+      document.getElementById('btnToggleField').addEventListener('click', toggleMagneticField);
+      
+      // Botón para resetear vista
+      document.getElementById('btnReset').addEventListener('click', resetView);
+      
+      // Evento para mostrar información al hacer hover en las capas
+      document.addEventListener('mousemove', (event) => {
+        if (!showLayers) return;
+        
+        const mouse = new THREE.Vector2(
+          (event.clientX / window.innerWidth) * 2 - 1,
+          -(event.clientY / window.innerHeight) * 2 + 1
+        );
+        
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(mouse, camera);
+        
+        const intersects = raycaster.intersectObjects([
+          crustHalf1, crustHalf2, 
+          mantleHalf1, mantleHalf2, 
+          outerCore, innerCore
+        ]);
+        
+        if (intersects.length > 0) {
+          const layer = intersects[0].object.userData.layer;
+          updateLayerInfo(layer);
+        }
+      });
+      
+      // Redimensionamiento
       window.addEventListener('resize', () => {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
