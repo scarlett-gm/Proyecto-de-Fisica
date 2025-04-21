@@ -74,65 +74,126 @@ body{
 /*.btn-menu{
     display: none;
 }*/
-.container .btn-menu {
-    display: block; 
-    padding: 0 20px;
-}
-
-.contenedor-menu{
+.contenedor-menu {
     position: fixed;
-    background: rgba(4, 4, 43, 0.5);
+    background: rgba(53, 53, 117, 0.85); /* Fondo más oscuro para mejor contraste */
+    backdrop-filter: blur(5px); /* Efecto de desenfoque moderno */
     width: 100%;
     height: 100vh;
     top: 0;
     left: 0;
-    transition: all 500ms ease;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); /* Transición más suave */
     opacity: 0;
-    visibility: hidden;  
+    visibility: hidden;
     z-index: 1000;
+    display: flex;
+    justify-content: flex-start;
 }
+
 #btn-menu:checked ~ .contenedor-menu {
     opacity: 1;
     visibility: visible;
 }
+
 .cont-menu {
     width: 100%;
-    max-width: 250px;
-    background: #1c1c1c;
+    max-width: 300px; /* Un poco más ancho */
+    background: linear-gradient(135deg, #1c1c1c 0%, #2a2a2a 100%); /* Degradado sutil */
     height: 100vh;
     position: relative;
-    transition: all 500ms ease;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     transform: translateX(-100%);
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.3);
+    overflow-y: auto;
+    scrollbar-width: thin; /* Para navegadores modernos */
+    scrollbar-color: #444 #2a2a2a; /* Color del scroll */
 }
+
+/* Estilo del scroll para Webkit */
+.cont-menu::-webkit-scrollbar {
+    width: 6px;
+}
+.cont-menu::-webkit-scrollbar-thumb {
+    background-color: #444;
+    border-radius: 3px;
+}
+.cont-menu::-webkit-scrollbar-track {
+    background: #2a2a2a;
+}
+
 #btn-menu:checked ~ .contenedor-menu .cont-menu {
     transform: translateX(0%);
 }
+
 .cont-menu nav {
     width: 100%;
-    padding: 20px 0;
-    transform: translateY(15%);
+    padding: 40px 0 20px 0;
     display: block;
-    opacity: 1;
 }
+
 .cont-menu nav a {
-    display: block;
+    display: flex;
+    align-items: center;
     text-decoration: none;
-    padding: 15 px 20px;
-    color: #c7c7c7;
+    padding: 16px 28px;
+    color: #f0f0f0;
     font-size: 18px;
-    border-left: 5px solid transparent;
-    transition: all 0.3ms ease;
+    font-weight: 400;
+    border-left: 4px solid transparent;
+    transition: all 0.3s ease;
+    gap: 12px; /* Espacio entre icono y texto */
 }
+
 .cont-menu nav a:hover {
-    border-left: 5px solid #c7c7c7;
-    background: #1f1f1f;
+    border-left: 4px solid #6a7cff; /* Color de acento */
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateX(4px);
 }
+
+.cont-menu nav a.active { /* Para elementos activos */
+    border-left: 4px solid #6a7cff;
+    background: rgba(106, 124, 255, 0.1);
+    font-weight: 500;
+}
+
 .cont-menu label {
     position: absolute;
-    right: 5px;
-    top: 10px;
+    right: 20px;
+    top: 20px;
     color: #fff;
     cursor: pointer;
-    font-size: 18px;
+    font-size: 24px;
+    transition: transform 0.3s ease;
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
+
+.cont-menu label:hover {
+    transform: rotate(90deg);
+    background: rgba(0, 0, 0, 0.5);
+}
+
+/* Efecto de aparición escalonada para los items */
+.cont-menu nav a {
+    opacity: 0;
+    transform: translateX(-20px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+#btn-menu:checked ~ .contenedor-menu .cont-menu nav a {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Retraso escalonado para la animación */
+.cont-menu nav a:nth-child(1) { transition-delay: 0.1s; }
+.cont-menu nav a:nth-child(2) { transition-delay: 0.15s; }
+.cont-menu nav a:nth-child(3) { transition-delay: 0.2s; }
+/* ... y así sucesivamente para cada elemento */
 /*fin de la barra*/
