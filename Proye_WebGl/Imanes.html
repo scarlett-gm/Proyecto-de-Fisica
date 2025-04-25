@@ -1,27 +1,151 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Imanes</title>
-    <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <title>Simulación de Campo Magnético</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; }
+  </style>
 </head>
 <body>
-    <div class="menucapa"></div>
-    <!--	--------------->
-    <input type="checkbox" id="btn-menu" />
-    <div class="contenedor-menu">
-      <div class="cont-menu">
-        <label for="btn-menu">✖️</label>
-        <nav>
-          <a href="campo.html">Fuentes de campo magnético</a>
-          <a href="Tierra.html">Tierra</a>
-          <a href="Imanes.html" id="btn-imanes">Imanes</a>
-        </nav>
-        <div id="contenido-dinamico"></div>
+  <!-- Usamos versiones específicas para mayor estabilidad -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.min.js"></script>
   
-      </div>
-    </div>
-    <script type="module" src="Imanes.js"></script>
+  <script>
+    // 1. INICIALIZACIÓN BÁSICA
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000000); // Fondo negro
+    
+    const camera = new THREE.PerspectiveCamera(
+      75, 
+      window.innerWidth / window.innerHeight, 
+      0.1, 
+      1000
+    );
+    camera.position.set(0, 5, 15);
+    
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // 2. CONTROLES DE CÁMARA (asegurarse que mire al centro)
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 0, 0);
+    controls.update();
+
+    // 3. ILUMINACIÓN (ESENCIAL PARA VER LOS OBJETOS)
+    // Luz ambiental (general)
+    const ambientLight = new THREE.AmbientLight(0x404040);
+    scene.add(ambientLight);
+    
+    // Luz direccional (para sombras y efectos)
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(1, 1, 1);
+    scene.add(directionalLight);
+
+    // 4. CREACIÓN DE IMANES (CON POLOS VISIBLES)
+    const magnetGeometry = new THREE.CylinderGeometry(0.5, 0.5, 2, 32);
+    
+    // Material para polo norte (rojo)
+    const northMaterial = new THREE.MeshPhongMaterial({ 
+      color: 0xff0000,
+      shininess: 100
+    });
+    
+    // Material para polo sur (azul)
+    const southMaterial = new THREE.MeshPhongMaterial({
+      color: 0x0000ff,
+      shininess: 100
+    });
+
+    // Primer imán
+    const magnet1 = new THREE.Group();
+    const north1 = new THREE.Mesh(magnetGeometry, northMaterial);
+    north1.position.set(-5, 0, 0);
+    north1.rotation.z = Math.PI/2; // Rotación horizontal
+    
+    const south1 = new THREE.Mesh(magnetGeometry, southMaterial);
+    south1.position.set(-3, 0, 0);
+    south1.rotation.z = Math.PI/2;
+    
+    magnet1.add(north1);
+    magnet1.add(south1);
+    scene.add(magnet1);
+
+    // Segundo imán
+    const magnet2 = new THREE.Group();
+    const north2 = new THREE.Mesh(magnetGeometry, northMaterial);
+    north2.position.set(5, 0, 0);
+    north2.rotation.z = Math.PI/2;
+    
+    const south2 = new THREE.Mesh(magnetGeometry, southMaterial);
+    south2.position.set(3, 0, 0);
+    south2.rotation.z = Math.PI/2;
+    
+    magnet2.add(north2);
+    magnet2.add(south2);
+    scene.add(magnet2);
+
+    // 5. LÍNEAS DE CAMPO MAGNÉTICO (SIMPLIFICADAS)
+    function createFieldLines() {
+      const points = [];
+      const material = new THREE.LineBasicMaterial({ color: 0x00ffff });
+      
+      // Línea desde polo norte 1 hasta polo sur 2
+      for (let i = 0; i <= 20; i++) {
+        const t = i / 20;
+        const x = THREE.MathUtils.lerp(-5, 5, t);
+        const y = 3 * Math.sin(t * Math.PI);
+        points.push(new THREE.Vector3(x, y, 0));
+      }
+      
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      const line = new THREE.Line(geometry, material);
+      scene.add(line);
+      
+      // Línea desde polo sur 1 hasta polo norte 2
+      const points2 = [];
+      for (let i = 0; i <= 20; i++) {
+        const t = i / 20;
+        const x = THREE.MathUtils.lerp(-3, 3, t);
+        const y = -3 * Math.sin(t * Math.PI);
+        points2.push(new THREE.Vector3(x, y, 0));
+      }
+      
+      const geometry2 = new THREE.BufferGeometry().setFromPoints(points2);
+      const line2 = new THREE.Line(geometry2, material);
+      scene.add(line2);
+    }
+
+    createFieldLines();
+
+    // 6. SUELO Y EJES DE REFERENCIA
+    const gridHelper = new THREE.GridHelper(20, 20, 0x555555, 0x333333);
+    scene.add(gridHelper);
+    
+    const axesHelper = new THREE.AxesHelper(5);
+    scene.add(axesHelper);
+
+    // 7. ANIMACIÓN (ESENCIAL PARA RENDERIZAR)
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    
+    animate();
+
+    // 8. MANEJO DE REDIMENSIONAMIENTO
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // 9. VERIFICACIÓN DE CARGA (OPCIONAL)
+    console.log("Simulación cargada correctamente");
+  </script>
 </body>
 </html>
