@@ -1,156 +1,211 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Fuentes de Campo Magnético</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #2a2a38;
-      color: #ffffff;
-    }
-
-    header, nav, .contenido {
-      overflow: hidden;
-      position: relative;
-      z-index: 1;
-    }
-
-    header {
-      background: linear-gradient(90deg, #6a5acd, #7b68ee, #8a2be2);
-      padding: 30px;
-      text-align: center;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    }
-
-    header h1 {
-      margin: 0;
-      font-size: 2.5rem;
-      letter-spacing: 2px;
-    }
-
-    nav {
-      background-color: #3f3c56;
-      padding: 10px 0;
-      text-align: center;
-    }
-
-    nav a {
-      color: #b0c4ff;
-      margin: 0 20px;
-      text-decoration: none;
-      font-weight: bold;
-    }
-
-    nav a:hover {
-      color: #ffffff;
-    }
-
-    .contenido {
-      max-width: 900px;
-      margin: 40px auto;
-      padding: 20px;
-      background-color: #4b3c5e;
-      border-radius: 15px;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
-    }
-
-    .contenido h2 {
-      color: #c2d1ff;
-      margin-bottom: 15px;
-    }
-
-    .contenido p {
-      line-height: 1.6;
-    }
-
-    footer {
-      text-align: center;
-      padding: 20px;
-      background-color: #2f2b40;
-      color: #aaa;
-      font-size: 0.9rem;
-      margin-top: 40px;
-    }
-
-    /* Animación wipe-in desde la derecha */
-    @keyframes wipe-in-right {
-      from {
-        clip-path: inset(0 100% 0 0);
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fuentes de Campo Magnético</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: "Segoe UI", sans-serif;
+        background-color: #2a2a38;
+        color: #ffffff;
       }
-      to {
-        clip-path: inset(0 0 0 0);
+
+      header,
+      nav,
+      .contenido {
+        overflow: hidden;
+        position: relative;
+        z-index: 1;
       }
-    }
 
-    [transition-style="in:wipe:right"] {
-      animation: 2.5s cubic-bezier(.25, 1, .30, 1) wipe-in-right both;
-    }
-  </style>
-</head>
-<body>
+      header {
+        background: linear-gradient(90deg, #6a5acd, #7b68ee, #8a2be2);
+        padding: 30px;
+        text-align: center;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      }
 
-  <header transition-style="in:wipe:right">
-    <h1>Fuentes De Campo Magnetico</h1>
-  </header>
+      header h1 {
+        margin: 0;
+        font-size: 2.5rem;
+        letter-spacing: 2px;
+      }
 
-  <nav transition-style="in:wipe:right">
-    <a href="Index.html">Simulador</a>
-    <a href="Tierra.html">Tierra</a>
-    <a href="Imanes.html" id="btn-imanes">Imanes</a>
-  </nav>
+      nav {
+        background-color: #3f3c56;
+        padding: 10px 0;
+        text-align: center;
+      }
 
-  <section class="contenido" transition-style="in:wipe:right">
-    <h2>Bienvenido a Nuestra Página</h2>
-    <p>
-      Esta es una página informativa de ejemplo que utiliza una paleta moderna en tonos azules y morados. 
-      Puedes personalizarla con el contenido de tu organización, producto o portafolio.
-    </p>
-    <p>
-      El diseño está enfocado en la claridad y en proporcionar una experiencia visual atractiva. Puedes 
-      incluir secciones adicionales según tus necesidades, como testimonios, galería de imágenes o un blog.
-    </p>
-  </section>
+      nav a {
+        color: #b0c4ff;
+        margin: 0 20px;
+        text-decoration: none;
+        font-weight: bold;
+      }
 
-  <section class="contenido" transition-style="in:wipe:right">
-    <h2>Fuentes Naturales del Campo Magnético</h2>
-    <p>
-      La Tierra genera su propio campo magnético debido al movimiento del núcleo externo líquido. Este campo es crucial
-      para la vida, ya que desvía las partículas solares y cósmicas.
-    </p>
-    <p>
-      También existen fuentes magnéticas naturales como los minerales de magnetita, que pueden influir en brújulas o en
-      experimentos científicos.
-    </p>
-  </section>
+      nav a:hover {
+        color: #ffffff;
+      }
 
-  <section class="contenido" transition-style="in:wipe:right">
-    <h2>Fuentes Artificiales</h2>
-    <p>
-      Bobinas con corriente eléctrica, imanes permanentes y dispositivos electromagnéticos generan campos magnéticos en entornos
-      industriales, tecnológicos y médicos.
-    </p>
-    <p>
-      Estas fuentes tienen aplicaciones prácticas en motores, transformadores, trenes magnéticos, entre otros.
-    </p>
-  </section>
+      .contenido {
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 20px;
+        background-color: #4b3c5e;
+        border-radius: 15px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+      }
 
-  <section class="contenido" transition-style="in:wipe:right">
-    <h2>Importancia del Campo Magnético</h2>
-    <p>
-      Sin el campo magnético terrestre, la atmósfera sería arrasada por el viento solar. Este campo también permite la navegación,
-      el funcionamiento de brújulas y protege a los sistemas electrónicos.
-    </p>
-    <p>
-      En la medicina, los campos magnéticos son utilizados en tecnologías como la resonancia magnética nuclear (RMN).
-    </p>
-  </section>
+      .contenido h2 {
+        color: #c2d1ff;
+        margin-bottom: 15px;
+      }
 
-  <footer>
-    &copy; 2025 Nombre del Proyecto. Todos los derechos reservados.
-  </footer>
+      .contenido p {
+        line-height: 1.6;
+      }
 
-</body>
+      footer {
+        text-align: center;
+        padding: 20px;
+        background-color: #2f2b40;
+        color: #aaa;
+        font-size: 0.9rem;
+        margin-top: 40px;
+      }
+
+      /* Animación wipe-in desde la derecha */
+      @keyframes wipe-in-right {
+        from {
+          clip-path: inset(0 100% 0 0);
+        }
+        to {
+          clip-path: inset(0 0 0 0);
+        }
+      }
+
+      [transition-style="in:wipe:right"] {
+        animation: 2.5s cubic-bezier(0.25, 1, 0.3, 1) wipe-in-right both;
+      }
+    </style>
+  </head>
+  <body>
+    <header transition-style="in:wipe:right">
+      <h1>Fuentes De Campo Magnetico</h1>
+    </header>
+
+    <nav transition-style="in:wipe:right">
+      <a href="Index.html">Simulador</a>
+      <a href="Tierra.html">Tierra</a>
+      <a href="Imanes.html" id="btn-imanes">Imanes</a>
+    </nav>
+
+    <section class="contenido" transition-style="in:wipe:right">
+      <h2>Fuentes de Campo Magnetico</h2>
+      <p>
+        En física, un campo magnético es una región del espacio donde una carga
+        en movimiento (como un electrón) experimenta una fuerza magnética. En el
+        caso de nuestro planeta, esta región se genera a partir del movimiento
+        de materiales conductores en el interior terrestre.
+      </p>
+      <p>
+        Existen dos tipos principales de campos magnéticos. Un
+        <a
+          href="https://tymagnets.com/es/Campos-magn%C3%A9ticos-uniformes%3A-una-gu%C3%ADa-completa/"
+          title="Para saber mas del campo magnético uniforme"
+          >Campo magnético uniforme</a
+        >
+        tiene magnitud y dirección constantes en todos sus puntos. Por el
+        contrario, un campo magnético no uniforme tiene magnitud y dirección
+        variables en diferentes puntos.
+      </p>
+      <p>
+        El <b>campo magnético </b>es una manifestación del fenómeno
+        electromagnético generado por cargas eléctricas en movimiento. Se
+        representa mediante una magnitud vectorial B, cuya dirección indica la
+        orientación del campo y cuya magnitud señala su intensidad. A nivel
+        visual, las líneas de campo magnético surgen del polo norte y terminan
+        en el polo sur de un imán, formando circuitos cerrados. En unidades del
+        Sistema Internacional (SI), el campo magnético se mide en teslas (T).
+      </p>
+    </section>
+
+    <section class="contenido" transition-style="in:wipe:right">
+      <h2>Fuentes del campo magnético natural de la Tierra</h2>
+      <p>
+        En el núcleo externo de la Tierra, compuesto por metales como el hierro
+        y el níquel en estado líquido, se producen movimientos de convección
+        debido al calor interno. Estas corrientes de metal fundido, combinadas
+        con la rotación del planeta, generan corrientes eléctricas por el
+        movimiento de cargas dentro del fluido conductor. De acuerdo con la
+        <a
+          href="https://imamagnets.com/productos/blog/ley-de-ampere/"
+          title="Para entender la ley de Ampère"
+          >Ley de Ampère</a
+        >
+        y
+        <a
+          href="https://concepto.de/ley-de-faraday/#:~:text=un%20circuito%20cerrado.-,%C2%BFQu%C3%A9%20es%20la%20Ley%20de%20Faraday%3F,el%C3%A9ctrico%20creado%20por%20estos%20cambios."
+          title="Para entender la ley de Faraday"
+          >Ley de Faraday</a
+        >, estas corrientes inducen un campo magnético.
+      </p>
+      <p>
+        Cuando hablamos del campo magnético terrestre, lo podemos imaginar como
+        si la Tierra tuviera un gran imán en su interior. Por eso, las líneas
+        del campo magnético salen del polo norte magnético (ubicado cerca del
+        polo sur geográfico), rodean la Tierra por fuera y entran por el polo
+        sur magnético (cerca del polo norte geográfico), completando así un
+        circuito cerrado. Esto puede parecer confuso, ya que el polo norte de
+        una brújula apunta al norte geográfico, pero en realidad está siendo
+        atraído por el sur magnético de la Tierra, que se encuentra en esa zona.
+        Por eso es más correcto decir que una brújula tiene un polo que “busca
+        el norte” y otro que “busca el sur”. Como los polos opuestos se atraen,
+        el hecho de que el polo norte de la brújula apunte hacia el norte
+        geográfico significa que allí se encuentra el sur magnético terrestre.
+        Así, el campo magnético de la Tierra actúa de forma similar al de un
+        imán de barra, con líneas curvas que emergen de un polo, rodean el
+        planeta y entran por el otro.
+      </p>
+      <p>
+        El resultado es un campo magnético, que forma una estructura más amplia
+        llamada magnetosfera. Esta actúa como un escudo físico, desviando
+        partículas cargadas del viento solar y protegiendo la atmósfera, los
+        dispositivos electrónicos y a los seres vivos de la radiación cósmica.
+      </p>
+    </section>
+
+    <section class="contenido" transition-style="in:wipe:right">
+      <h2>Fuentes Artificiales</h2>
+      <p>
+        Bobinas con corriente eléctrica, imanes permanentes y dispositivos
+        electromagnéticos generan campos magnéticos en entornos industriales,
+        tecnológicos y médicos.
+      </p>
+      <p>
+        Estas fuentes tienen aplicaciones prácticas en motores, transformadores,
+        trenes magnéticos, entre otros.
+      </p>
+    </section>
+
+    <section class="contenido" transition-style="in:wipe:right">
+      <h2>Importancia del Campo Magnético</h2>
+      <p>
+        Sin el campo magnético terrestre, la atmósfera sería arrasada por el
+        viento solar. Este campo también permite la navegación, el
+        funcionamiento de brújulas y protege a los sistemas electrónicos.
+      </p>
+      <p>
+        En la medicina, los campos magnéticos son utilizados en tecnologías como
+        la resonancia magnética nuclear (RMN).
+      </p>
+    </section>
+
+    <footer>
+      &copy; 2025 Nombre del Proyecto. Todos los derechos reservados.
+    </footer>
+  </body>
 </html>
