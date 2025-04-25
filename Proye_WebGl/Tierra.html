@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Tierra 3D con Campo Magnético Realista</title>
+  <link rel="stylesheet" href="style.css" />
   <style>
     body { margin: 0; overflow: hidden; background: #000; }
     canvas { display: block; }
@@ -39,6 +40,22 @@
   <div id="controls">
     <button id="toggleLayers">Mostrar Capas</button>
     <button id="toggleField">Mostrar Campo Magnético</button>
+  </div>
+
+  <div class="menucapa"></div>
+  <!--	--------------->
+  <input type="checkbox" id="btn-menu" />
+  <div class="contenedor-menu">
+    <div class="cont-menu">
+      <label for="btn-menu">✖️</label>
+      <nav>
+        <a href="campo.html">Fuentes de campo magnético</a>
+        <a href="Tierra.html">Tierra</a>
+        <a href="Imanes.html" id="btn-imanes">Imanes</a>
+      </nav>
+      <div id="contenido-dinamico"></div>
+
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
