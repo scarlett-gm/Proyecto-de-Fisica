@@ -4,8 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Imanes</title>
+    <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+    <div class="menucapa"></div>
+    <!--	--------------->
+    <input type="checkbox" id="btn-menu" />
+    <div class="contenedor-menu">
+      <div class="cont-menu">
+        <label for="btn-menu">✖️</label>
+        <nav>
+          <a href="campo.html">Fuentes de campo magnético</a>
+          <a href="Tierra.html">Tierra</a>
+          <a href="Imanes.html" id="btn-imanes">Imanes</a>
+        </nav>
+        <div id="contenido-dinamico"></div>
+  
+      </div>
+    </div>
     <script type="module" src="Imanes.js"></script>
 </body>
 </html>
