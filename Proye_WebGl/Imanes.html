@@ -1,483 +1,388 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Simulación de Campo Magnético con Colores Dinámicos</title>
-  <style>
-    body { margin: 0; overflow: hidden; }
-    canvas { display: block; }
-    #ui {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      z-index: 1;
-      background: rgba(0,0,0,0.7);
-      padding: 15px;
-      border-radius: 10px;
-      color: white;
-      font-family: Arial, sans-serif;
-      width: 250px;
-    }
-    button {
-      font-size: 14px;
-      margin: 5px;
-      padding: 8px 12px;
-      border: none;
-      border-radius: 5px;
-      background: #4CAF50;
-      color: white;
-      cursor: pointer;
-      transition: all 0.3s;
-      width: 100%;
-    }
-    button:hover {
-      background: #45a049;
-      transform: scale(1.02);
-    }
-    button.active {
-      background: #2196F3;
-    }
-    .control-group {
-      margin: 10px 0;
-      padding: 10px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 5px;
-    }
-    label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: bold;
-    }
-    input[type="range"] {
-      width: 100%;
-      margin-bottom: 10px;
-    }
-    .pole-selector {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 10px;
-    }
-    .pole-btn {
-      width: 48%;
-      padding: 5px;
-    }
-    .north-btn {
-      background: #ff3333;
-    }
-    .south-btn {
-      background: #3399ff;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campo magnético de un solenoide</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+        canvas {
+            display: block;
+        }
+        #title-label {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            background-color: rgba(0,0,0,0.7);
+            padding: 12px 20px;
+            border-radius: 8px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 8px 32px 0 rgba(0,0,0,0.3);
+            font-size: 1.2rem;
+            font-weight: bold;
+            z-index: 100;
+        }
+        #controls-panel {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            background-color: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 8px 32px 0 rgba(0,0,0,0.3);
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            text-align: center;
+        }
+        .control-group {
+            padding: 8px;
+        }
+        .control-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #4fc3f7;
+        }
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            color: white;
+            font-size: 1.2rem;
+        }
+        #progress-bar {
+            width: 200px;
+            height: 3px;
+            background: rgba(255,255,255,0.2);
+            margin-top: 20px;
+            overflow: hidden;
+        }
+        #progress {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #4fc3f7 0%, #00bcd4 100%);
+            transition: width 0.3s ease;
+        }
+    </style>
 </head>
 <body>
-  <div id="ui">
-    <div class="control-group">
-    <button id="resetBtn">🔄 Reiniciar Simulación</button>
-    </div>
-
-    <div class="control-group">
-    <label>Modo de Interacción:</label>
-    <button id="modeBtn" class="active">🧲 Automático</button>
-    <div class="pole-selector">
-    <button id="attractionBtn" class="pole-btn north-btn">🔴 Atracción</button>
-    <button id="repulsionBtn" class="pole-btn south-btn">🔵 Repulsión</button>
-    </div>
-
-
-    <div class="control-group">
-    <label for="lineCount">Número de Líneas: <span id="lineCountValue">10</span></label>
-    <input type="range" id="lineCount" min="5" max="20" value="10">
-  
-    <label for="lineLength">Longitud: <span id="lineLengthValue">5</span></label>
-    <input type="range" id="lineLength" min="3" max="10" value="5" step="0.1">
-  
-    <label for="fieldStrength">Fuerza: <span id="fieldStrengthValue">100</span>%</label>
-    <input type="range" id="fieldStrength" min="50" max="200" value="100">
-    </div>
-
-    <div class="control-group">
-    <label>Configuración de Polos:</label>
-    <button id="flipPolesBtn">🔄 Invertir Polos</button>
-    <button id="samePolesBtn">⚡ Hacer Polos Iguales</button>
-    </div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/curves/CurveExtras.min.js"></script>
-
-  <script>
-    // 1. CONFIGURACIÓN INICIAL
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x111111);
-
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 0, 25);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
-
-    // 2. CONTROLES DE CÁMARA
-    const controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.target.set(0, 0, 0);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.update();
-
-    // 3. ILUMINACIÓN
-    const ambientLight = new THREE.AmbientLight(0x444444);
-    scene.add(ambientLight);
-
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-    directionalLight.position.set(5, 5, 5);
-    scene.add(directionalLight);
-
-    // 4. CREACIÓN DE IMANES (ORIENTADOS HORIZONTALMENTE)
-    const magnetGeometry = new THREE.CylinderGeometry(0.7, 0.7, 3, 32);
-    const northMaterial = new THREE.MeshPhongMaterial({ color: 0xff3333, shininess: 100 });
-    const southMaterial = new THREE.MeshPhongMaterial({ color: 0x3399ff, shininess: 100 });
-
-    const magnet1 = new THREE.Group();
-    const magnet2 = new THREE.Group();
-
-    const north1 = new THREE.Mesh(magnetGeometry, northMaterial);
-    const south1 = new THREE.Mesh(magnetGeometry, southMaterial);
-    const north2 = new THREE.Mesh(magnetGeometry, northMaterial);
-    const south2 = new THREE.Mesh(magnetGeometry, southMaterial);
-
-    // Rotación para orientarlos horizontalmente (eje X)
-    north1.rotation.z = Math.PI/2;
-    south1.rotation.z = Math.PI/2;
-    north2.rotation.z = Math.PI/2;
-    south2.rotation.z = Math.PI/2;
-
-    // Posiciones relativas dentro de los imanes (eje X ahora)
-    north1.position.set(-1.5, 0, 0);
-    south1.position.set(1.5, 0, 0);
-    north2.position.set(-1.5, 0, 0);
-    south2.position.set(1.5, 0, 0);
-
-    magnet1.add(north1, south1);
-    magnet2.add(north2, south2);
-
-    // Posición inicial
-    magnet1.position.set(-8, 0, 0);
-    magnet2.position.set(8, 0, 0);
-
-    scene.add(magnet1, magnet2);
-
-    // 5. FÍSICA Y MOVIMIENTO
-    const velocity1 = new THREE.Vector3();
-    const velocity2 = new THREE.Vector3();
-
-    let interactionMode = 'auto'; // 'auto', 'attraction', 'repulsion'
-    let fieldStrength = 1.0;
+    <div id="title-label">Campo magnético de un solenoide</div>
     
-    // Función para verificar polos enfrentados
-    function areFacingPolesSame() {
-      const magnet1South = south1.material.color.getHex();
-      const magnet2North = north2.material.color.getHex();
-      return magnet1South === magnet2North;
-    }
-
-    // 6. LÍNEAS DE CAMPO MAGNÉTICO CON COLORES DINÁMICOS
-    const fieldLines = [];
-    let lineCount = 10;
-    let lineLength = 5;
-
-    // Función para obtener el material de línea según el tipo de polo
-    function getLineMaterial(poleColor) {
-      const isNorth = poleColor === 0xff3333; // Comparar con color rojo del norte
-      return new THREE.LineBasicMaterial({ 
-        color: isNorth ? 0xff3333 : 0x3399ff, // Rojo para norte, azul para sur
-        transparent: true, 
-        opacity: 0.8,
-        linewidth: 2
-      });
-    }
-
-    // Función para rotar un vector alrededor de un eje
-    function rotateVector(vector, axis, angle) {
-      const matrix = new THREE.Matrix4().makeRotationAxis(axis, angle);
-      return vector.applyMatrix4(matrix);
-    }
-
-    // Función para crear curvas que salen de un polo
-    function createPoleFieldCurve(polePos, angle, magnetDir, isNorth) {
-      // Dirección perpendicular al imán (eje Y)
-      const perpendicular = new THREE.Vector3(0, 1, 0);
-      
-      // Rotamos la dirección perpendicular alrededor del eje del imán
-      const radialDir = rotateVector(perpendicular.clone(), magnetDir, angle);
-      
-      // Dirección de la curva (combinación de radial y dirección del imán)
-      const curveDir = new THREE.Vector3()
-        .copy(radialDir)
-        .add(magnetDir.clone().multiplyScalar(isNorth ? 0.5 : -0.5))
-        .normalize();
-      
-      const startPoint = isNorth ? polePos.clone() : new THREE.Vector3().copy(polePos).add(curveDir.clone().multiplyScalar(lineLength));
-      const endPoint = isNorth ? new THREE.Vector3().copy(polePos).add(curveDir.clone().multiplyScalar(lineLength)) : polePos.clone();
-      
-      // Puntos de control para crear un arco suave
-      const control1 = isNorth 
-        ? new THREE.Vector3().copy(startPoint).add(curveDir.clone().multiplyScalar(lineLength * 0.3))
-        : new THREE.Vector3().copy(startPoint).add(curveDir.clone().multiplyScalar(-lineLength * 0.7));
-      
-      const control2 = isNorth 
-        ? new THREE.Vector3().copy(startPoint).add(curveDir.clone().multiplyScalar(lineLength * 0.7))
-        : new THREE.Vector3().copy(startPoint).add(curveDir.clone().multiplyScalar(-lineLength * 0.3));
-      
-      return new THREE.CubicBezierCurve3(startPoint, control1, control2, endPoint);
-    }
-
-    // Función para crear curvas que rodean el imán
-    function createLoopFieldCurve(northPos, southPos, angle, magnetDir) {
-      const startPoint = northPos.clone();
-      const endPoint = southPos.clone();
-      
-      // Radio del arco basado en la distancia entre polos
-      const magnetLength = northPos.distanceTo(southPos);
-      const arcHeight = magnetLength * 1.5;
-      
-      // Dirección perpendicular al imán (eje Y)
-      const perpendicular = new THREE.Vector3(0, 1, 0);
-      
-      // Rotamos la dirección perpendicular alrededor del eje del imán
-      const radialDir = rotateVector(perpendicular.clone(), magnetDir, angle);
-      
-      // Punto medio entre los polos
-      const midPoint = new THREE.Vector3().lerpVectors(northPos, southPos, 0.5);
-      
-      // Puntos de control para crear un arco que rodea el imán
-      const control1 = new THREE.Vector3().copy(midPoint).add(radialDir.clone().multiplyScalar(arcHeight));
-      const control2 = new THREE.Vector3().copy(midPoint).add(radialDir.clone().multiplyScalar(arcHeight));
-      
-      return new THREE.CubicBezierCurve3(startPoint, control1, control2, endPoint);
-    }
-
-    // Generar líneas de campo para un imán
-    function generateMagnetFieldLines(magnet) {
-      const north = magnet.children[0];
-      const south = magnet.children[1];
-      const northPos = north.getWorldPosition(new THREE.Vector3());
-      const southPos = south.getWorldPosition(new THREE.Vector3());
-      
-      // Dirección del imán (de sur a norte)
-      const magnetDir = new THREE.Vector3().subVectors(northPos, southPos).normalize();
-      
-      // Obtener materiales basados en los colores actuales de los polos
-      const northLineMaterial = getLineMaterial(north.material.color.getHex());
-      const southLineMaterial = getLineMaterial(south.material.color.getHex());
-      const loopLineMaterial = new THREE.LineBasicMaterial({ 
-        color: 0xaa00ff, // Morado para líneas que rodean el imán
-        transparent: true, 
-        opacity: 0.8,
-        linewidth: 2
-      });
-      
-      // Generar líneas que salen del polo norte
-      for (let i = 0; i < lineCount; i++) {
-        const angle = (i / lineCount) * Math.PI * 2;
-        const curve = createPoleFieldCurve(northPos, angle, magnetDir, true);
-        const points = curve.getPoints(50);
-        const geometry = new THREE.BufferGeometry().setFromPoints(points);
-        const line = new THREE.Line(geometry, northLineMaterial);
-        scene.add(line);
-        fieldLines.push(line);
-      }
-      
-      // Generar líneas que entran al polo sur
-      for (let i = 0; i < lineCount; i++) {
-        const angle = (i / lineCount) * Math.PI * 2;
-        const curve = createPoleFieldCurve(southPos, angle, magnetDir, false);
-        const points = curve.getPoints(50);
-        const geometry = new THREE.BufferGeometry().setFromPoints(points);
-        const line = new THREE.Line(geometry, southLineMaterial);
-        scene.add(line);
-        fieldLines.push(line);
-      }
-      
-      // Generar líneas que rodean el imán
-      for (let i = 0; i < lineCount; i++) {
-        const angle = (i / lineCount) * Math.PI * 2;
-        const curve = createLoopFieldCurve(northPos, southPos, angle, magnetDir);
-        const points = curve.getPoints(50);
-        const geometry = new THREE.BufferGeometry().setFromPoints(points);
-        const line = new THREE.Line(geometry, loopLineMaterial);
-        scene.add(line);
-        fieldLines.push(line);
-      }
-    }
-
-    function clearFieldLines() {
-      fieldLines.forEach(line => scene.remove(line));
-      fieldLines.length = 0;
-    }
-
-    // 7. ANIMACIÓN
-    function animate() {
-      requestAnimationFrame(animate);
-
-      clearFieldLines();
-      generateMagnetFieldLines(magnet1);
-      generateMagnetFieldLines(magnet2);
-
-      // Calcular fuerzas entre imanes
-      let force1 = new THREE.Vector3();
-      let force2 = new THREE.Vector3();
-
-      const poles1 = [north1, south1];
-      const poles2 = [north2, south2];
-
-      poles1.forEach(p1 => {
-        poles2.forEach(p2 => {
-          const pos1 = p1.getWorldPosition(new THREE.Vector3());
-          const pos2 = p2.getWorldPosition(new THREE.Vector3());
-          const r = new THREE.Vector3().subVectors(pos2, pos1);
-          const distance = r.length();
-
-          // Determinar si los polos son del mismo tipo
-          const isSamePole = p1.material.color.getHex() === p2.material.color.getHex();
-          
-          // Calcular fuerza según el modo de interacción
-          let forceMagnitude = 0;
-          let forceDirection = new THREE.Vector3();
-          
-          if (distance > 0.1) {
-            forceMagnitude = (200 * fieldStrength) / (distance * distance);
-            forceDirection = r.normalize();
+    <div id="controls-panel">
+        <div class="control-group">
+            <div class="control-title">Rotación X</div>
+            <div>Q / W</div>
+        </div>
+        <div class="control-group">
+            <div class="control-title">Rotación Y</div>
+            <div>A / S</div>
+        </div>
+        <div class="control-group">
+            <div class="control-title">Rotación Z</div>
+            <div>Z / X</div>
+        </div>
+        <div class="control-group">
+            <div class="control-title">Controles</div>
+            <div>Shift + Arrastre: Mover</div>
+            <div>R: Resetear</div>
+        </div>
+    </div>
+    
+    <div id="loading-screen">
+        <div>Cargando modelo 3D...</div>
+        <div id="progress-bar"><div id="progress"></div></div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+    
+    <script>
+        // Variables globales
+        let scene, camera, renderer, controls;
+        let model, mixer, clock;
+        let targetRotation = { x: 0, y: 0, z: 0 };
+        const ROTATION_SPEED = 0.05;
+        const KEY_ROTATION_SPEED = 0.08;
+        
+        // Variables para controles mejorados
+        let isShiftPressed = false;
+        let isDragging = false;
+        let mouseStart = new THREE.Vector2();
+        const initialCameraPosition = new THREE.Vector3(0, 4, 8);
+        const initialTargetRotation = { x: 0, y: 0, z: 0 };
+        
+        // Inicializar la escena
+        function init() {
+            // Crear escena con ambiente profesional
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB); // o blanco FFFFFF
+            scene.fog = new THREE.FogExp2(0x111133, 0.002);
             
-            if (interactionMode === 'auto') {
-              forceDirection.multiplyScalar(isSamePole ? -1 : 1);
-            } else if (interactionMode === 'attraction') {
-              forceDirection.multiplyScalar(1);
-            } else if (interactionMode === 'repulsion') {
-              forceDirection.multiplyScalar(-1);
+            // Crear cámara con perspectiva cinematográfica
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.copy(initialCameraPosition);
+            
+            // Crear renderizador con efectos avanzados
+            renderer = new THREE.WebGLRenderer({ 
+                antialias: true,
+                powerPreference: "high-performance"
+            });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.body.appendChild(renderer.domElement);
+            
+            // Configurar iluminación profesional
+            setupLights();
+            
+            // Crear suelo reflectante
+            setupGround();
+            
+            // Controles de órbita mejorados
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.minDistance = 2;
+            controls.maxDistance = 20;
+            controls.maxPolarAngle = Math.PI * 0.9;
+            controls.screenSpacePanning = false;
+            
+            // Reloj para animaciones
+            clock = new THREE.Clock();
+            
+            // Cargar modelo
+            loadModel();
+            
+            // Event listeners
+            window.addEventListener('resize', onWindowResize);
+            document.addEventListener('keydown', onKeyDown);
+            document.addEventListener('keyup', onKeyUp);
+            document.addEventListener('mousedown', onMouseDown);
+            document.addEventListener('mouseup', onMouseUp);
+            document.addEventListener('mousemove', onMouseMove);
+            
+            // Iniciar bucle de animación
+            animate();
+        }
+        
+        function setupLights() {
+            // Luz ambiental suave
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.8);
+            scene.add(ambientLight);
+            
+            // Luz direccional principal (sol)
+            const mainLight = new THREE.DirectionalLight(0xffffff, 1.2);
+            mainLight.position.set(5, 10, 7);
+            mainLight.castShadow = true;
+            mainLight.shadow.mapSize.width = 2048;
+            mainLight.shadow.mapSize.height = 2048;
+            mainLight.shadow.camera.near = 0.5;
+            mainLight.shadow.camera.far = 50;
+            mainLight.shadow.camera.left = -10;
+            mainLight.shadow.camera.right = 10;
+            mainLight.shadow.camera.top = 10;
+            mainLight.shadow.camera.bottom = -10;
+            scene.add(mainLight);
+            
+            // Luz de relleno
+            const fillLight = new THREE.DirectionalLight(0x4455ff, 0.4);
+            fillLight.position.set(-5, 3, -5);
+            scene.add(fillLight);
+        }
+        
+        function setupGround() {
+            // Suelo con reflejo
+            const groundGeometry = new THREE.CircleGeometry(15, 64);
+            const groundMaterial = new THREE.MeshStandardMaterial({
+                color: 0xA5A59E,
+                roughness: 0.1,
+                metalness: 0.5
+            });
+            
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.position.y = -1.5; // Suelo bajado
+            ground.receiveShadow = true;
+            scene.add(ground);
+        }
+        
+        function loadModel() {
+            const loader = new THREE.GLTFLoader();
+            
+            loader.load(
+                'recursos/campo_magnetico_generato_da_un_solenoide.glb',
+                function (gltf) {
+                    model = gltf.scene;
+                    
+                    // Ajustar modelo
+                    setupModel(model);
+                    
+                    // Configurar animaciones si existen
+                    if (gltf.animations && gltf.animations.length) {
+                        mixer = new THREE.AnimationMixer(model);
+                        gltf.animations.forEach(clip => {
+                            const action = mixer.clipAction(clip);
+                            action.play();
+                        });
+                    }
+                    
+                    // Ocultar pantalla de carga
+                    setTimeout(() => {
+                        document.getElementById('loading-screen').style.opacity = '0';
+                        setTimeout(() => {
+                            document.getElementById('loading-screen').style.display = 'none';
+                        }, 500);
+                    }, 500);
+                },
+                function (xhr) {
+                    // Progreso de carga
+                    const percent = (xhr.loaded / xhr.total * 100);
+                    document.getElementById('progress').style.width = `${percent}%`;
+                },
+                function (error) {
+                    console.error('Error al cargar el modelo:', error);
+                    document.getElementById('loading-screen').innerHTML = 
+                        '<div style="color: #ff5555">Error al cargar el modelo</div>' +
+                        '<div style="margin-top: 20px; font-size: 0.8rem">' + error.message + '</div>';
+                }
+            );
+        }
+        
+        function setupModel(model) {
+            const box = new THREE.Box3().setFromObject(model);
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+            
+            // Escala automática
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const scale = 6.0 / maxDim;
+            model.scale.set(scale, scale, scale);
+            
+            // Posicionamiento
+            model.position.y = -center.y * scale - 0.5 + 2; // Ajuste para suelo bajado
+            
+            // Sombras y materiales
+            model.traverse(child => {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                }
+            });
+            
+            scene.add(model);
+        }
+        
+        // Función para resetear posición
+        function resetModelPosition() {
+            if (model) {
+                targetRotation.x = initialTargetRotation.x;
+                targetRotation.y = initialTargetRotation.y;
+                targetRotation.z = initialTargetRotation.z;
+                model.rotation.set(0, 0, 0);
+            }
+            camera.position.copy(initialCameraPosition);
+            controls.target.set(0, 0, 0);
+            controls.update();
+        }
+        
+        // Controladores de eventos
+        function onKeyDown(event) {
+            switch (event.key.toLowerCase()) {
+                case 'q': targetRotation.x -= KEY_ROTATION_SPEED; break;
+                case 'w': targetRotation.x += KEY_ROTATION_SPEED; break;
+                case 'a': targetRotation.y -= KEY_ROTATION_SPEED; break;
+                case 's': targetRotation.y += KEY_ROTATION_SPEED; break;
+                case 'z': targetRotation.z -= KEY_ROTATION_SPEED; break;
+                case 'x': targetRotation.z += KEY_ROTATION_SPEED; break;
+                case 'r': resetModelPosition(); break;
+                case 'shift': isShiftPressed = true; break;
+            }
+        }
+        
+        function onKeyUp(event) {
+            if (event.key.toLowerCase() === 'shift') {
+                isShiftPressed = false;
+            }
+        }
+        
+        function onMouseDown(event) {
+            if (isShiftPressed && event.button === 0) {
+                isDragging = true;
+                mouseStart.set(event.clientX, event.clientY);
+            }
+        }
+        
+        function onMouseUp() {
+            isDragging = false;
+        }
+        
+        function onMouseMove(event) {
+            if (isDragging && isShiftPressed) {
+                const deltaX = event.clientX - mouseStart.x;
+                const deltaY = event.clientY - mouseStart.y;
+                
+                // Mover cámara en el plano XZ (como Blender)
+                camera.position.x -= deltaX * 0.01;
+                camera.position.z -= deltaY * 0.01;
+                controls.target.x -= deltaX * 0.01;
+                controls.target.z -= deltaY * 0.01;
+                
+                mouseStart.set(event.clientX, event.clientY);
+            }
+        }
+        
+        // Bucle de animación
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const delta = clock.getDelta();
+            
+            // Actualizar rotación suavizada
+            if (model) {
+                model.rotation.x += (targetRotation.x - model.rotation.x) * ROTATION_SPEED;
+                model.rotation.y += (targetRotation.y - model.rotation.y) * ROTATION_SPEED;
+                model.rotation.z += (targetRotation.z - model.rotation.z) * ROTATION_SPEED;
             }
             
-            const force = forceDirection.multiplyScalar(forceMagnitude);
-            force1.add(force);
-            force2.add(force.clone().negate());
-          }
-        });
-      });
-
-      // Aplicar fuerzas con amortiguación
-      velocity1.multiplyScalar(0.93);
-      velocity2.multiplyScalar(0.93);
-
-      velocity1.add(force1.multiplyScalar(0.02));
-      velocity2.add(force2.multiplyScalar(0.02));
-
-      magnet1.position.add(velocity1);
-      magnet2.position.add(velocity2);
-
-      // Limitar el movimiento
-      const maxDistance = 15;
-      [magnet1, magnet2].forEach(magnet => {
-        if (magnet.position.length() > maxDistance) {
-          magnet.position.normalize().multiplyScalar(maxDistance);
-          velocity1.set(0, 0, 0);
-          velocity2.set(0, 0, 0);
+            // Actualizar animaciones
+            if (mixer) mixer.update(delta);
+            
+            // Actualizar controles
+            controls.update();
+            
+            // Renderizar
+            renderer.render(scene, camera);
         }
-      });
-
-      controls.update();
-      renderer.render(scene, camera);
-    }
-    animate();
-
-    // 8. INTERFAZ DE USUARIO
-    function updateUI() {
-      document.getElementById('lineCountValue').textContent = lineCount;
-      document.getElementById('lineLengthValue').textContent = lineLength;
-      document.getElementById('fieldStrengthValue').textContent = Math.round(fieldStrength * 100);
-      
-      document.getElementById('modeBtn').classList.toggle('active', interactionMode === 'auto');
-      document.getElementById('attractionBtn').classList.toggle('active', interactionMode === 'attraction');
-      document.getElementById('repulsionBtn').classList.toggle('active', interactionMode === 'repulsion');
-    }
-
-    // Función para actualizar los materiales de las líneas
-    function updateFieldLines() {
-      clearFieldLines();
-      generateMagnetFieldLines(magnet1);
-      generateMagnetFieldLines(magnet2);
-    }
-
-    // Event listeners
-    document.getElementById('resetBtn').addEventListener('click', () => {
-      magnet1.position.set(-8, 0, 0);
-      magnet2.position.set(8, 0, 0);
-      velocity1.set(0, 0, 0);
-      velocity2.set(0, 0, 0);
-      updateFieldLines();
-    });
-
-    document.getElementById('modeBtn').addEventListener('click', () => {
-      interactionMode = 'auto';
-      updateUI();
-    });
-
-    document.getElementById('attractionBtn').addEventListener('click', () => {
-      if (areFacingPolesSame()) {
-        alert('No es posible seleccionar atracción cuando los polos enfrentados son iguales. Los polos iguales se repelen.');
-        return;
-      }
-      interactionMode = 'attraction';
-      updateUI();
-    });
-
-    document.getElementById('repulsionBtn').addEventListener('click', () => {
-      if (!areFacingPolesSame()) {
-        alert('No es posible seleccionar repulsión cuando los polos enfrentados son diferentes. Los polos diferentes se atraen.');
-        return;
-      }
-      interactionMode = 'repulsion';
-      updateUI();
-    });
-
-    document.getElementById('flipPolesBtn').addEventListener('click', () => {
-      [north2.material, south2.material] = [south2.material, north2.material];
-      updateFieldLines();
-    });
-
-    document.getElementById('samePolesBtn').addEventListener('click', () => {
-      if (north1.material.color.getHex() === north2.material.color.getHex()) {
-        [north2.material, south2.material] = [south2.material, north2.material];
-      } else {
-        north2.material = north1.material.clone();
-        south2.material = south1.material.clone();
-      }
-      updateFieldLines();
-    });
-
-    document.getElementById('lineCount').addEventListener('input', (e) => {
-      lineCount = parseInt(e.target.value);
-      updateUI();
-      updateFieldLines();
-    });
-
-    document.getElementById('lineLength').addEventListener('input', (e) => {
-      lineLength = parseFloat(e.target.value);
-      updateUI();
-      updateFieldLines();
-    });
-
-    document.getElementById('fieldStrength').addEventListener('input', (e) => {
-      fieldStrength = parseInt(e.target.value) / 100;
-      updateUI();
-    });
-
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-
-    updateUI();
-  </script>
+        
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        // Iniciar la aplicación
+        init();
+    </script>
 </body>
 </html>
