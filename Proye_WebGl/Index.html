@@ -2,11 +2,12 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <title>Simulacion de fuentes de campo</title>
+    <title>Simulación de fuentes de campo</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <script type="module" src="/main.js"></script>
+
     <header class="header">
       <div class="container">
         <div class="btn-menu">
@@ -15,10 +16,17 @@
         <div class="logo">
           <h1>SIMULACION DE FUENTES DE CAMPO MAGNETICO</h1>
         </div>
+        
+        <!-- BOTONES: Música y Manual -->
+        <div style="position: absolute; top: 30px; right: 40px;">
+          <button onclick="toggleMusic()" style="margin-right: 10px;">🎵 Música</button>
+          <button onclick="openManual()">📄 Manual</button>
+        </div>
       </div>
     </header>
+
     <div class="menucapa"></div>
-    <!--	--------------->
+
     <input type="checkbox" id="btn-menu" />
     <div class="contenedor-menu">
       <div class="cont-menu">
@@ -27,11 +35,35 @@
           <a href="Index.html">Simulador</a>
           <a href="campo.html">Fuentes de campo magnético</a>
           <a href="Tierra.html">Tierra</a>
-          <a href="Imanes.html" id="btn-imanes">Imanes</a>
+          <a href="selenoide.html" id="btn-imanes">Selenoide</a>
         </nav>
         <div id="contenido-dinamico"></div>
-
       </div>
     </div>
+
+    <!-- Audio oculto -->
+    <audio id="bg-music" loop>
+      <source src="recursos/espera.mp3" type="audio/mpeg" />
+      Tu navegador no soporta audio HTML5.
+    </audio>
+
+    <!-- Scripts -->
+    <script>
+      const audio = document.getElementById('bg-music');
+      let isPlaying = false;
+
+      function toggleMusic() {
+        if (isPlaying) {
+          audio.pause();
+        } else {
+          audio.play();
+        }
+        isPlaying = !isPlaying;
+      }
+
+      function openManual() {
+        window.open('recursos/manual.pdf', '_blank');
+      }
+    </script>
   </body>
 </html>

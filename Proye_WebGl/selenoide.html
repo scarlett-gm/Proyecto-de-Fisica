@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Campo magnético de un solenoide</title>
+     <link rel="stylesheet" href="style.css" />
     <style>
         body {
             margin: 0;
@@ -85,6 +86,7 @@
     </style>
 </head>
 <body>
+
     <div id="title-label">Campo magnético de un solenoide</div>
     
     <div id="controls-panel">
@@ -111,6 +113,19 @@
         <div>Cargando modelo 3D...</div>
         <div id="progress-bar"><div id="progress"></div></div>
     </div>
+     <div class="menucapa"></div>
+    <!--	--------------->
+    <input type="checkbox" id="btn-menu" />
+    <div class="contenedor-menu">
+      <div class="cont-menu">
+        <label for="btn-menu">✖️</label>
+        <nav>
+          <a href="Index.html">Simulador</a>
+          <a href="campo.html">Fuentes de campo magnético</a>
+          <a href="Tierra.html">Tierra</a>
+          <a href="selenoide.html" id="btn-imanes">Selenoide</a>
+        </nav>
+        <div id="contenido-dinamico"></div>
     
     <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/GLTFLoader.js"></script>
