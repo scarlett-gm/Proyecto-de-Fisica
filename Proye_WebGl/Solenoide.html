@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campo magnético de un solenoide</title>
+     <link rel="stylesheet" href="style.css" />
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+        canvas {
+            display: block;
+        }
+        #title-label {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            background-color: rgba(0,0,0,0.7);
+            padding: 12px 20px;
+            border-radius: 8px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 8px 32px 0 rgba(0,0,0,0.3);
+            font-size: 1.2rem;
+            font-weight: bold;
+            z-index: 100;
+        }
+        #controls-panel {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            background-color: rgba(0,0,0,0.7);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 8px 32px 0 rgba(0,0,0,0.3);
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            text-align: center;
+        }
+        .control-group {
+            padding: 8px;
+        }
+        .control-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #4fc3f7;
+        }
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            color: white;
+            font-size: 1.2rem;
+        }
+        #progress-bar {
+            width: 200px;
+            height: 3px;
+            background: rgba(255,255,255,0.2);
+            margin-top: 20px;
+            overflow: hidden;
+        }
+        #progress {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #4fc3f7 0%, #00bcd4 100%);
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="title-label">Campo magnético de un solenoide</div>
+    
+    <div id="controls-panel">
+        <div class="control-group">
+            <div class="control-title">Rotación X</div>
+            <div>Q / W</div>
+        </div>
+        <div class="control-group">
+            <div class="control-title">Rotación Y</div>
+            <div>A / S</div>
+        </div>
+        <div class="control-group">
+            <div class="control-title">Rotación Z</div>
+            <div>Z / X</div>
+        </div>
+        <div class="control-group">
+            <div class="control-title">Controles</div>
+            <div>Shift + Arrastre: Mover</div>
+            <div>R: Resetear</div>
+        </div>
+    </div>
+    
+    <div id="loading-screen">
+        <div>Cargando modelo 3D...</div>
+        <div id="progress-bar"><div id="progress"></div></div>
+    </div>
+     <div class="menucapa"></div>
+    <!--	--------------->
+    <input type="checkbox" id="btn-menu" />
+    <div class="contenedor-menu">
+      <div class="cont-menu">
+        <label for="btn-menu">✖️</label>
+        <nav>
+          <a href="Index.html">Simulador</a>
+          <a href="campo.html">Fuentes de campo magnético</a>
+          <a href="Tierra.html">Tierra</a>
+          <a href="selenoide.html" id="btn-imanes">Selenoide</a>
+        </nav>
+        <div id="contenido-dinamico"></div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+    
+    <script>
+        // Variables globales
+        let scene, camera, renderer, controls;
+        let model, mixer, clock;
+        let targetRotation = { x: 0, y: 0, z: 0 };
+        const ROTATION_SPEED = 0.05;
+        const KEY_ROTATION_SPEED = 0.08;
+        
+        // Variables para controles mejorados
+        let isShiftPressed = false;
+        let isDragging = false;
+        let mouseStart = new THREE.Vector2();
+        const initialCameraPosition = new THREE.Vector3(0, 4, 8);
+        const initialTargetRotation = { x: 0, y: 0, z: 0 };
+        
+        // Inicializar la escena
+        function init() {
+            // Crear escena con ambiente profesional
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB); // o blanco FFFFFF
+            scene.fog = new THREE.FogExp2(0x111133, 0.002);
+            
+            // Crear cámara con perspectiva cinematográfica
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.copy(initialCameraPosition);
+            
+            // Crear renderizador con efectos avanzados
+            renderer = new THREE.WebGLRenderer({ 
+                antialias: true,
+                powerPreference: "high-performance"
+            });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.body.appendChild(renderer.domElement);
+            
+            // Configurar iluminación profesional
+            setupLights();
+            
+            // Crear suelo reflectante
+            setupGround();
+            
+            // Controles de órbita mejorados
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.minDistance = 2;
+            controls.maxDistance = 20;
+            controls.maxPolarAngle = Math.PI * 0.9;
+            controls.screenSpacePanning = false;
+            
+            // Reloj para animaciones
+            clock = new THREE.Clock();
+            
+            // Cargar modelo
+            loadModel();
+            
+            // Event listeners
+            window.addEventListener('resize', onWindowResize);
+            document.addEventListener('keydown', onKeyDown);
+            document.addEventListener('keyup', onKeyUp);
+            document.addEventListener('mousedown', onMouseDown);
+            document.addEventListener('mouseup', onMouseUp);
+            document.addEventListener('mousemove', onMouseMove);
+            
+            // Iniciar bucle de animación
+            animate();
+        }
+        
+        function setupLights() {
+            // Luz ambiental suave
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.8);
+            scene.add(ambientLight);
+            
+            // Luz direccional principal (sol)
+            const mainLight = new THREE.DirectionalLight(0xffffff, 1.2);
+            mainLight.position.set(5, 10, 7);
+            mainLight.castShadow = true;
+            mainLight.shadow.mapSize.width = 2048;
+            mainLight.shadow.mapSize.height = 2048;
+            mainLight.shadow.camera.near = 0.5;
+            mainLight.shadow.camera.far = 50;
+            mainLight.shadow.camera.left = -10;
+            mainLight.shadow.camera.right = 10;
+            mainLight.shadow.camera.top = 10;
+            mainLight.shadow.camera.bottom = -10;
+            scene.add(mainLight);
+            
+            // Luz de relleno
+            const fillLight = new THREE.DirectionalLight(0x4455ff, 0.4);
+            fillLight.position.set(-5, 3, -5);
+            scene.add(fillLight);
+        }
+        
+        function setupGround() {
+            // Suelo con reflejo
+            const groundGeometry = new THREE.CircleGeometry(15, 64);
+            const groundMaterial = new THREE.MeshStandardMaterial({
+                color: 0xA5A59E,
+                roughness: 0.1,
+                metalness: 0.5
+            });
+            
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.position.y = -1.5; // Suelo bajado
+            ground.receiveShadow = true;
+            scene.add(ground);
+        }
+        
+        function loadModel() {
+            const loader = new THREE.GLTFLoader();
+            
+            loader.load(
+                'recursos/campo_magnetico_generato_da_un_solenoide.glb',
+                function (gltf) {
+                    model = gltf.scene;
+                    
+                    // Ajustar modelo
+                    setupModel(model);
+                    
+                    // Configurar animaciones si existen
+                    if (gltf.animations && gltf.animations.length) {
+                        mixer = new THREE.AnimationMixer(model);
+                        gltf.animations.forEach(clip => {
+                            const action = mixer.clipAction(clip);
+                            action.play();
+                        });
+                    }
+                    
+                    // Ocultar pantalla de carga
+                    setTimeout(() => {
+                        document.getElementById('loading-screen').style.opacity = '0';
+                        setTimeout(() => {
+                            document.getElementById('loading-screen').style.display = 'none';
+                        }, 500);
+                    }, 500);
+                },
+                function (xhr) {
+                    // Progreso de carga
+                    const percent = (xhr.loaded / xhr.total * 100);
+                    document.getElementById('progress').style.width = `${percent}%`;
+                },
+                function (error) {
+                    console.error('Error al cargar el modelo:', error);
+                    document.getElementById('loading-screen').innerHTML = 
+                        '<div style="color: #ff5555">Error al cargar el modelo</div>' +
+                        '<div style="margin-top: 20px; font-size: 0.8rem">' + error.message + '</div>';
+                }
+            );
+        }
+        
+        function setupModel(model) {
+            const box = new THREE.Box3().setFromObject(model);
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+            
+            // Escala automática
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const scale = 6.0 / maxDim;
+            model.scale.set(scale, scale, scale);
+            
+            // Posicionamiento
+            model.position.y = -center.y * scale - 0.5 + 2; // Ajuste para suelo bajado
+            
+            // Sombras y materiales
+            model.traverse(child => {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                }
+            });
+            
+            scene.add(model);
+        }
+        
+        // Función para resetear posición
+        function resetModelPosition() {
+            if (model) {
+                targetRotation.x = initialTargetRotation.x;
+                targetRotation.y = initialTargetRotation.y;
+                targetRotation.z = initialTargetRotation.z;
+                model.rotation.set(0, 0, 0);
+            }
+            camera.position.copy(initialCameraPosition);
+            controls.target.set(0, 0, 0);
+            controls.update();
+        }
+        
+        // Controladores de eventos
+        function onKeyDown(event) {
+            switch (event.key.toLowerCase()) {
+                case 'q': targetRotation.x -= KEY_ROTATION_SPEED; break;
+                case 'w': targetRotation.x += KEY_ROTATION_SPEED; break;
+                case 'a': targetRotation.y -= KEY_ROTATION_SPEED; break;
+                case 's': targetRotation.y += KEY_ROTATION_SPEED; break;
+                case 'z': targetRotation.z -= KEY_ROTATION_SPEED; break;
+                case 'x': targetRotation.z += KEY_ROTATION_SPEED; break;
+                case 'r': resetModelPosition(); break;
+                case 'shift': isShiftPressed = true; break;
+            }
+        }
+        
+        function onKeyUp(event) {
+            if (event.key.toLowerCase() === 'shift') {
+                isShiftPressed = false;
+            }
+        }
+        
+        function onMouseDown(event) {
+            if (isShiftPressed && event.button === 0) {
+                isDragging = true;
+                mouseStart.set(event.clientX, event.clientY);
+            }
+        }
+        
+        function onMouseUp() {
+            isDragging = false;
+        }
+        
+        function onMouseMove(event) {
+            if (isDragging && isShiftPressed) {
+                const deltaX = event.clientX - mouseStart.x;
+                const deltaY = event.clientY - mouseStart.y;
+                
+                // Mover cámara en el plano XZ (como Blender)
+                camera.position.x -= deltaX * 0.01;
+                camera.position.z -= deltaY * 0.01;
+                controls.target.x -= deltaX * 0.01;
+                controls.target.z -= deltaY * 0.01;
+                
+                mouseStart.set(event.clientX, event.clientY);
+            }
+        }
+        
+        // Bucle de animación
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const delta = clock.getDelta();
+            
+            // Actualizar rotación suavizada
+            if (model) {
+                model.rotation.x += (targetRotation.x - model.rotation.x) * ROTATION_SPEED;
+                model.rotation.y += (targetRotation.y - model.rotation.y) * ROTATION_SPEED;
+                model.rotation.z += (targetRotation.z - model.rotation.z) * ROTATION_SPEED;
+            }
+            
+            // Actualizar animaciones
+            if (mixer) mixer.update(delta);
+            
+            // Actualizar controles
+            controls.update();
+            
+            // Renderizar
+            renderer.render(scene, camera);
+        }
+        
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        // Iniciar la aplicación
+        init();
+    </script>
+</body>
+</html>
